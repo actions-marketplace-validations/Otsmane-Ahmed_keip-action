@@ -1,0 +1,24 @@
+name: 'KEIP - Install-time network enforcement'
+description: 'Blocks malicious pip install egress using eBPF LSM hooks'
+inputs:
+  whitelist:
+    description: 'Comma-separated IPs/domains to allow (default: PyPI only)'
+    required: false
+    default: 'pypi.org,files.pythonhosted.org'
+  mode:
+    description: 'block or audit (audit logs but does not kill)'
+    required: false
+    default: 'block'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install KEIP
+      shell: bash
+      run: |
+        sudo apt-get install -y linux-headers-$(uname -r) bpftool
+        pip install keip  # or: git clone + make install
+    - name: Load KEIP policy
+      shell: bash
+      run: |
+        sudo keip --mode ${{ inputs.mode }} --whitelist "${{ inputs.whitelist }}" --daemon
